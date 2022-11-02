@@ -5,10 +5,7 @@ import org.slf4j.LoggerFactory;
 import ru.job4j.tracker.model.Item;
 
 import java.io.InputStream;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
@@ -16,7 +13,7 @@ import java.util.Properties;
 public class SqlTracker implements Store {
 
     private static final Logger LOG = LoggerFactory.getLogger(SqlTracker.class.getName());
-    private static final String INSERT_REQUEST = "insert into items(name) values(?) returning id;";
+    private static final String INSERT_REQUEST = "insert into items(name) values(?);";
     private static final String UPDATE_REQUEST = "update items set name = ? where id = ?;";
     private static final String DELETE_REQUEST = "delete from items where id = ?;";
     private static final String FINDALL_REQUEST = "select * from items;";
@@ -62,15 +59,14 @@ public class SqlTracker implements Store {
     @Override
     public Item add(Item item) {
         LOG.debug("Insert data, name: {}", item.getName());
-        try (PreparedStatement ps = cn.prepareStatement(INSERT_REQUEST)) {
+        try (PreparedStatement ps = cn.prepareStatement(INSERT_REQUEST, Statement.RETURN_GENERATED_KEYS)) {
             ps.setString(1, item.getName());
-            try (ResultSet result = ps.executeQuery()) {
-                if (result.next()) {
+            ps.execute();
+            try (ResultSet key = ps.getGeneratedKeys()) {
+                if (key.next()) {
                     LOG.debug("Inserting complete");
-                    item.setId(String.valueOf(result.getInt(1)));
+                    item.setId(String.valueOf(key.getInt(1)));
                     LOG.debug("Generated id: {}", item.getId());
-                } else {
-                    LOG.debug("Inserting is fallen");
                 }
             }
         } catch (Exception e) {
