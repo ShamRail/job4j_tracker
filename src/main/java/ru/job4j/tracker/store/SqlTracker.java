@@ -3,11 +3,12 @@ package ru.job4j.tracker.store;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import ru.job4j.tracker.model.Item;
+
 import java.io.InputStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
@@ -34,46 +35,6 @@ public class SqlTracker implements Store {
 
     public void init() {
         initConnection();
-        initTable();
-        initData();
-    }
-
-    private void initData() {
-        LOG.debug("Init data");
-        try {
-            LOG.debug("Reading init file");
-            List<String> requests = Files.readAllLines(Paths.get("./db/insert.sql"));
-            LOG.debug("Reading completed. Requests: {}", requests.size());
-            LOG.debug("Insert data");
-            try (Statement smt = cn.createStatement()) {
-                for (String request : requests) {
-                    smt.addBatch(request);
-                }
-                smt.executeBatch();
-            }
-            LOG.debug("Inserting completed");
-        } catch (Exception e) {
-            LOG.error("Something went wrong", e);
-        }
-    }
-
-    private void initTable() {
-        LOG.debug("Init table");
-        LOG.debug("Read create.sql");
-        try {
-            List<String> requests = Files.readAllLines(Path.of("./db/create.sql"));
-            LOG.debug("Reading completed");
-            LOG.debug("Requests: {}, {}", requests.get(0), requests.get(1));
-            LOG.debug("Try to execute requests ...");
-            try (Statement stmt = cn.createStatement()) {
-                LOG.debug("Execute: {}", requests.get(0));
-                stmt.execute(requests.get(0));
-                LOG.debug("Execute: {}", requests.get(1));
-                stmt.execute(requests.get(1));
-            }
-        } catch (Exception e) {
-            LOG.error("Something went wrong", e);
-        }
     }
 
     private void initConnection() {
