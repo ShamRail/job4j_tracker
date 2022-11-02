@@ -1,4 +1,4 @@
-create table if not exists items (
+create table items (
    id serial primary key not null,
    name text
 );
